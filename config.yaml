@@ -1,0 +1,83 @@
+# ============================================
+# ASUFM Wildfire Spread Prediction Config
+# ============================================
+
+# Model Architecture
+model:
+  name: asufm
+  in_channels: 12
+  num_classes: 1
+  image_size: 64
+  patch_size: 4
+  embed_dim: 96
+  depths: [2, 2, 2, 2]
+  num_heads: [3, 6, 12, 24]
+  window_size: 8
+  mlp_ratio: 4
+  drop_rate: 0.0
+  drop_path_rate: 0.1
+  focal: true
+  use_checkpoint: false
+
+# Training
+training:
+  epochs: 50
+  batch_size: 16
+  learning_rate: 0.0001
+  weight_decay: 0.05
+  optimizer: adamw # adamw, adam, sgd
+  gradient_clip: 1.0
+  accum_iter: 16
+
+# Learning Rate Schedule
+scheduler:
+  type: cosine # cosine, step, none
+  warmup: true
+  warmup_lr: 0.000005
+  warmup_epochs: 5
+
+# Loss Function
+loss:
+  type: bce # bce, focal_tversky
+  pos_weight: 3.0
+  # Focal Tversky params (if type: focal_tversky)
+  alpha: 0.75
+  beta: 0.25
+  gamma: 1.0
+
+# Data
+data:
+  sampling: original # original, random_crop, center_crop, downsample
+  val_batch_size: 64
+  num_workers: 4
+
+# Features (12 NDWS features)
+features:
+  - elevation
+  - th
+  - vs
+  - tmmn
+  - tmmx
+  - sph
+  - pr
+  - pdsi
+  - NDVI
+  - population
+  - erc
+  - PrevFireMask
+
+# Logging
+logging:
+  use_wandb: false
+  wandb_project: wildfire-asufm
+  log_interval: 10
+  save_checkpoint_every: 1
+
+# Paths (null = auto-detect Kaggle/Local)
+paths:
+  train_data: null
+  eval_data: null
+  checkpoint_dir: ./checkpoints
+
+# Reproducibility
+seed: 42
