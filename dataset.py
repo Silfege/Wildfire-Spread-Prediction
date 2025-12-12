@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import tensorflow as tf
 import logging
+import os
 from typing import Literal
 from data_utils import (
     INPUT_FEATURES,
@@ -97,8 +98,15 @@ if __name__ == '__main__':
     from torch.utils.data import DataLoader
 
     # Look at the evaluation dataset
-    file_pattern = '../dataset/next-day-fire/next_day_wildfire_spread_eval_*.tfrecord'
+    # Use universal pattern to find all .tfrecord files
+    base_path = '../dataset/next-day-fire'
+    # Try recursive search first
+    file_pattern = os.path.join(base_path, '**/*.tfrecord')
     data_filenames = tf.io.gfile.glob(file_pattern)
+    # If no files found, try non-recursive
+    if not data_filenames:
+        file_pattern = os.path.join(base_path, '*.tfrecord')
+        data_filenames = tf.io.gfile.glob(file_pattern)
     limit_features = ['NDVI', 'elevation', 'tmmx']
     # Get the size of the dataset
     val_set = tf.data.TFRecordDataset(data_filenames)

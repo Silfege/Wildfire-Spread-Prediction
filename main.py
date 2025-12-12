@@ -87,14 +87,30 @@ skip_eval = args.skip_eval
 use_checkpointing = False
 
 # Datasets
-train_data_file_pattern = os.path.join(
-    BASE_DATA_PATH, 'next_day_wildfire_spread_train_*.tfrecord'
-)
+# Use universal pattern to find all .tfrecord files recursively
+# First try subdirectories (train/val), then fall back to all .tfrecord files
+train_dir = os.path.join(BASE_DATA_PATH, 'train')
+val_dir = os.path.join(BASE_DATA_PATH, 'val')
+
+if os.path.exists(train_dir) and os.path.exists(val_dir):
+    # If train/val subdirectories exist, use them
+    train_data_file_pattern = os.path.join(train_dir, '*.tfrecord')
+    val_data_file_pattern = os.path.join(val_dir, '*.tfrecord')
+else:
+    # Otherwise, search recursively for all .tfrecord files
+    train_data_file_pattern = os.path.join(BASE_DATA_PATH, '**/*.tfrecord')
+    val_data_file_pattern = os.path.join(BASE_DATA_PATH, '**/*.tfrecord')
+
 train_data_file_names = tf.io.gfile.glob(train_data_file_pattern)
-val_data_file_pattern = os.path.join(
-    BASE_DATA_PATH, 'next_day_wildfire_spread_eval_*.tfrecord'
-)
 val_data_file_names = tf.io.gfile.glob(val_data_file_pattern)
+
+# If no files found with recursive pattern, try non-recursive
+if not train_data_file_names:
+    train_data_file_pattern = os.path.join(BASE_DATA_PATH, '*.tfrecord')
+    train_data_file_names = tf.io.gfile.glob(train_data_file_pattern)
+if not val_data_file_names:
+    val_data_file_pattern = os.path.join(BASE_DATA_PATH, '*.tfrecord')
+    val_data_file_names = tf.io.gfile.glob(val_data_file_pattern)
 # Make tf datasets
 train_data = tf.data.TFRecordDataset(train_data_file_names)
 val_data = tf.data.TFRecordDataset(val_data_file_names)

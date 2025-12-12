@@ -49,9 +49,20 @@ if use_augmented:
     else:
         BASE_DATA_PATH_AUG = LOCAL_INPUT_AUG
     
-    train_data_file_pattern = os.path.join(BASE_DATA_PATH_AUG, 'train/*.tfrecord')
-    val_data_file_pattern = os.path.join(BASE_DATA_PATH_AUG, 'val/*.tfrecord')
-    test_data_file_pattern = os.path.join(BASE_DATA_PATH_AUG, 'test/*.tfrecord')
+    # Try subdirectories first, then fall back to recursive search
+    train_dir = os.path.join(BASE_DATA_PATH_AUG, 'train')
+    val_dir = os.path.join(BASE_DATA_PATH_AUG, 'val')
+    test_dir = os.path.join(BASE_DATA_PATH_AUG, 'test')
+    
+    if os.path.exists(train_dir) and os.path.exists(val_dir) and os.path.exists(test_dir):
+        train_data_file_pattern = os.path.join(train_dir, '*.tfrecord')
+        val_data_file_pattern = os.path.join(val_dir, '*.tfrecord')
+        test_data_file_pattern = os.path.join(test_dir, '*.tfrecord')
+    else:
+        # Search recursively for all .tfrecord files
+        train_data_file_pattern = os.path.join(BASE_DATA_PATH_AUG, '**/*.tfrecord')
+        val_data_file_pattern = os.path.join(BASE_DATA_PATH_AUG, '**/*.tfrecord')
+        test_data_file_pattern = os.path.join(BASE_DATA_PATH_AUG, '**/*.tfrecord')
     print('Using augmented dataset')
 else:
     if os.path.exists(KAGGLE_INPUT):
@@ -59,19 +70,36 @@ else:
     else:
         BASE_DATA_PATH = LOCAL_INPUT
     
-    train_data_file_pattern = os.path.join(
-        BASE_DATA_PATH, 'next_day_wildfire_spread_train_*.tfrecord'
-    )
-    val_data_file_pattern = os.path.join(
-        BASE_DATA_PATH, 'next_day_wildfire_spread_eval_*.tfrecord'
-    )
-    test_data_file_pattern = os.path.join(
-        BASE_DATA_PATH, 'next_day_wildfire_spread_test_*.tfrecord'
-    )
+    # Try subdirectories first, then fall back to recursive search
+    train_dir = os.path.join(BASE_DATA_PATH, 'train')
+    val_dir = os.path.join(BASE_DATA_PATH, 'val')
+    test_dir = os.path.join(BASE_DATA_PATH, 'test')
+    
+    if os.path.exists(train_dir) and os.path.exists(val_dir) and os.path.exists(test_dir):
+        train_data_file_pattern = os.path.join(train_dir, '*.tfrecord')
+        val_data_file_pattern = os.path.join(val_dir, '*.tfrecord')
+        test_data_file_pattern = os.path.join(test_dir, '*.tfrecord')
+    else:
+        # Search recursively for all .tfrecord files
+        train_data_file_pattern = os.path.join(BASE_DATA_PATH, '**/*.tfrecord')
+        val_data_file_pattern = os.path.join(BASE_DATA_PATH, '**/*.tfrecord')
+        test_data_file_pattern = os.path.join(BASE_DATA_PATH, '**/*.tfrecord')
     print('Using original dataset')
 train_data_file_names = tf.io.gfile.glob(train_data_file_pattern)
 val_data_file_names = tf.io.gfile.glob(val_data_file_pattern)
 test_data_file_names = tf.io.gfile.glob(test_data_file_pattern)
+
+# If no files found with recursive pattern, try non-recursive
+base_path = BASE_DATA_PATH_AUG if use_augmented else BASE_DATA_PATH
+if not train_data_file_names:
+    train_data_file_pattern = os.path.join(base_path, '*.tfrecord')
+    train_data_file_names = tf.io.gfile.glob(train_data_file_pattern)
+if not val_data_file_names:
+    val_data_file_pattern = os.path.join(base_path, '*.tfrecord')
+    val_data_file_names = tf.io.gfile.glob(val_data_file_pattern)
+if not test_data_file_names:
+    test_data_file_pattern = os.path.join(base_path, '*.tfrecord')
+    test_data_file_names = tf.io.gfile.glob(test_data_file_pattern)
 # Make tf datasets
 train_data = tf.data.TFRecordDataset(train_data_file_names)
 val_data = tf.data.TFRecordDataset(val_data_file_names)
